@@ -11,6 +11,7 @@ import android.content.Intent;
  *
  * Receives a boot message at boot and starts the login service.
  */
+@Configuration
 public class BootBroadcastReceiver extends BroadcastReceiver {
 
     @Override
