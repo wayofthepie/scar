@@ -42,9 +42,18 @@ filterByAnnotation cus a = checkCompilationUnits cus
     checkTypes ts = foldl (\acc t -> acc || hasAnnotation t) False ts
 
     hasAnnotation :: TypeDecl -> Bool
-    hasAnnotation (ClassTypeDecl (ClassDecl ms _ _ _ _ _)) =
-        foldl (\acc x -> acc || isAnnotatedWith a x) False ms
 
+    -- Classes
+    hasAnnotation (ClassTypeDecl (ClassDecl ms _ _ _ _ _)) =
+        checkModifiers ms a
+    -- Interfaces
+    hasAnnotation (InterfaceTypeDecl (InterfaceDecl ms _ _ _ _)) =
+        checkModifiers ms a
+    -- Something else ....
+    hasAnnotation _ = False
+
+checkModifiers :: [Modifier] -> AnnotationType -> Bool
+checkModifiers ms a = foldl (\acc x -> acc || isAnnotatedWith a x) False ms
 
 isAnnotatedWith :: AnnotationType -> Modifier -> Bool
 isAnnotatedWith a m
