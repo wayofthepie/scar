@@ -125,6 +125,8 @@ gather cus = map gather' cus
 -- needs to relect this and be updated with nested Maybe [JavaClassMetaInfo]
 -- or something similar and this method must then be updated to
 -- parse data into that structure.
+-- TODO : Functionality for Enums must be added, currently
+-- most below functions are partial and only deal with classes
 gather' :: CompilationUnit -> JavaClassMetaInfo
 gather' cu = do
     JavaClassMetaInfo "test" $ ApiState  $ extractMethodInfo $
@@ -139,60 +141,60 @@ filterClassTypeDecl = filter isClassTypeDecl
 
 extractClassBodies :: [TypeDecl] -> [ClassBody]
 extractClassBodies = map ( xClassBody . xClassDecl )
+  where
+    xClassDecl :: TypeDecl -> ClassDecl
+    xClassDecl (ClassTypeDecl c) = c
+    xClassDecl _ = error "undefined"
+
+    xClassBody :: ClassDecl -> ClassBody
+    xClassBody (ClassDecl _ _ _ _ _ cb) = cb
+    xClassBody (EnumDecl _ _ _ _) =
+        error "Functionality for Enums not in place yet."
+
 
 extractDecls :: [ClassBody] -> [[Decl]]
 extractDecls = map xDecls
+  where
+    xDecls :: ClassBody -> [Decl]
+    xDecls (ClassBody dcls) = dcls
+
 
 filterMemberDecl :: [[Decl]] -> [[Decl]]
 filterMemberDecl = map (filter memberDeclPred)
+  where
+    memberDeclPred :: Decl -> Bool
+    memberDeclPred (MemberDecl _) = True
+    memberDeclPred _                 = False
+
 
 extractMemberDecl :: [[Decl]] -> [[MemberDecl]]
 extractMemberDecl = map xMemberDecls
+  where
+    xMemberDecls :: [Decl] -> [MemberDecl]
+    xMemberDecls = map xMemberDecl
+
+    xMemberDecl :: Decl -> MemberDecl
+    xMemberDecl (MemberDecl m) = m
+    xMemberDecl _ = error "undefined"
+
 
 filterMethodDecl :: [[MemberDecl]] -> [[MemberDecl]]
 filterMethodDecl = map (filter methodDeclPred)
+  where
+    methodDeclPred :: MemberDecl -> Bool
+    methodDeclPred (MethodDecl _ _ _ _ _ _ _) = True
+    methodDeclPred _                          = False
+
 
 extractMethodInfo :: [[MemberDecl]] -> [[MethodInfo]]
 extractMethodInfo = map xMethodInfo
+  where
+    xMethodInfo :: [MemberDecl] -> [MethodInfo]
+    xMethodInfo = map xMethodInfo'
 
--- Extraction
--- | TODO : Functionality for Enums must be added, currently
--- most below functions are partial and only deal with classes
-
-xClassDecl :: TypeDecl -> ClassDecl
-xClassDecl (ClassTypeDecl c) = c
-xClassDecl _ = error "undefined"
-
-xClassBody :: ClassDecl -> ClassBody
-xClassBody (ClassDecl _ _ _ _ _ cb) = cb
-xClassBody (EnumDecl _ _ _ _) =
-    error "Functionality for Enums not in place yet."
-
-xDecls :: ClassBody -> [Decl]
-xDecls (ClassBody dcls) = dcls
-
-xMemberDecls :: [Decl] -> [MemberDecl]
-xMemberDecls = map xMemberDecl
-
-xMemberDecl :: Decl -> MemberDecl
-xMemberDecl (MemberDecl m) = m
-xMemberDecl _ = error "undefined"
-
-xMethodInfo :: [MemberDecl] -> [MethodInfo]
-xMethodInfo = map xMethodInfo'
-
-xMethodInfo' :: MemberDecl -> MethodInfo
-xMethodInfo' (MethodDecl a b c d e f _) = MethodInfo a b c d e f
-xMethodInfo' _ = error "undefined"
-
-
-memberDeclPred :: Decl -> Bool
-memberDeclPred (MemberDecl _) = True
-memberDeclPred _                 = False
-
-methodDeclPred :: MemberDecl -> Bool
-methodDeclPred (MethodDecl _ _ _ _ _ _ _) = True
-methodDeclPred _                          = False
+    xMethodInfo' :: MemberDecl -> MethodInfo
+    xMethodInfo' (MethodDecl a b c d e f _) = MethodInfo a b c d e f
+    xMethodInfo' _ = error "undefined"
 
 
 -- Utils
